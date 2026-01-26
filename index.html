@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prodigy | Cyber Tic-Tac-Toe</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #121212;
+            --card-bg: #1e1e1e;
+            --x-color: #00d4ff;
+            --o-color: #ff4757;
+            --shadow: 10px 10px 20px #0a0a0a, -5px -5px 15px #2a2a2a;
+        }
+
+        body {
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background-color: var(--bg);
+            font-family: 'Poppins', sans-serif;
+            color: white;
+            margin: 0;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            background: linear-gradient(to right, var(--x-color), var(--o-color));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .status {
+            margin-bottom: 20px;
+            font-size: 1.2rem;
+            font-weight: 300;
+            color: #bbb;
+        }
+
+        /* The Game Board */
+        .board {
+            display: grid;
+            grid-template-columns: repeat(3, 100px);
+            grid-template-rows: repeat(3, 100px);
+            gap: 15px;
+            padding: 20px;
+            background: var(--card-bg);
+            border-radius: 20px;
+            box-shadow: var(--shadow);
+        }
+
+        .cell {
+            width: 100px;
+            height: 100px;
+            background: var(--bg);
+            border-radius: 12px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 3rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: 0.3s all ease;
+            box-shadow: inset 2px 2px 5px #000, inset -2px -2px 5px #333;
+        }
+
+        .cell:hover {
+            transform: scale(1.05);
+            background: #1a1a1a;
+        }
+
+        .cell.x { color: var(--x-color); text-shadow: 0 0 15px var(--x-color); }
+        .cell.o { color: var(--o-color); text-shadow: 0 0 15px var(--o-color); }
+
+        /* Controls */
+        .controls {
+            margin-top: 30px;
+        }
+
+        .restart-btn {
+            padding: 12px 35px;
+            background: transparent;
+            border: 2px solid var(--x-color);
+            color: var(--x-color);
+            border-radius: 50px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        .restart-btn:hover {
+            background: var(--x-color);
+            color: black;
+            box-shadow: 0 0 20px var(--x-color);
+        }
+
+        /* Winning Animation */
+        .cell.winner {
+            background: rgba(255, 255, 255, 0.1);
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+    </style>
+</head>
+<body>
+
+    <h1>TIC-TAC-TOE</h1>
+    <div class="status" id="statusText">Player X's Turn</div>
+
+    <div class="board" id="board">
+        <div data-index="0" class="cell"></div>
+        <div data-index="1" class="cell"></div>
+        <div data-index="2" class="cell"></div>
+        <div data-index="3" class="cell"></div>
+        <div data-index="4" class="cell"></div>
+        <div data-index="5" class="cell"></div>
+        <div data-index="6" class="cell"></div>
+        <div data-index="7" class="cell"></div>
+        <div data-index="8" class="cell"></div>
+    </div>
+
+    <div class="controls">
+        <button class="restart-btn" onclick="restartGame()">RESTART GAME</button>
+    </div>
+
+    <script>
+        const statusText = document.getElementById('statusText');
+        const cells = document.querySelectorAll('.cell');
+        let currentPlayer = "X";
+        let gameState = ["", "", "", "", "", "", "", "", ""];
+        let running = true;
+
+        const winConditions = [
+            [0, 1, 2], [3, 4, 5], [6, 7, 8], // Rows
+            [0, 3, 6], [1, 4, 7], [2, 5, 8], // Columns
+            [0, 4, 8], [2, 4, 6]             // Diagonals
+        ];
+
+        cells.forEach(cell => cell.addEventListener('click', cellClicked));
+
+        function cellClicked() {
+            const index = this.getAttribute('data-index');
+
+            if (gameState[index] !== "" || !running) return;
+
+            updateCell(this, index);
+            checkWinner();
+        }
+
+        function updateCell(cell, index) {
+            gameState[index] = currentPlayer;
+            cell.textContent = currentPlayer;
+            cell.classList.add(currentPlayer.toLowerCase());
+        }
+
+        function changePlayer() {
+            currentPlayer = (currentPlayer === "X") ? "O" : "X";
+            statusText.textContent = `Player ${currentPlayer}'s Turn`;
+        }
+
+        function checkWinner() {
+            let roundWon = false;
+
+            for (let i = 0; i < winConditions.length; i++) {
+                const condition = winConditions[i];
+                const cellA = gameState[condition[0]];
+                const cellB = gameState[condition[1]];
+                const cellC = gameState[condition[2]];
+
+                if (cellA == "" || cellB == "" || cellC == "") continue;
+                if (cellA == cellB && cellB == cellC) {
+                    roundWon = true;
+                    highlightWinner(condition);
+                    break;
+                }
+            }
+
+            if (roundWon) {
+                statusText.textContent = `Player ${currentPlayer} Wins!`;
+                statusText.style.color = currentPlayer === "X" ? "var(--x-color)" : "var(--o-color)";
+                running = false;
+            } else if (!gameState.includes("")) {
+                statusText.textContent = `Draw!`;
+                running = false;
+            } else {
+                changePlayer();
+            }
+        }
+
+        function highlightWinner(indices) {
+            indices.forEach(i => cells[i].classList.add('winner'));
+        }
+
+        function restartGame() {
+            currentPlayer = "X";
+            gameState = ["", "", "", "", "", "", "", "", ""];
+            statusText.textContent = `Player X's Turn`;
+            statusText.style.color = "#bbb";
+            cells.forEach(cell => {
+                cell.textContent = "";
+                cell.classList.remove('x', 'o', 'winner');
+            });
+            running = true;
+        }
+    </script>
+</body>
+</html>
